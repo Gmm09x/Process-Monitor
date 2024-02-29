@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Process Monitor</title>
+    <style>
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        th, td {
+            border: 1px solid #dddddd;
+            text-align: left;
+            padding: 8px;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .action-buttons button {
+            margin-right: 5px;
+        }
+        .high-cpu {
+            background-color: #ff9999;
+        }
+        .high-memory {
+            background-color: #99ccff;
+        }
+        .search-bar {
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Process Monitor</h1>
+    <div class="search-bar">
+        <input type="text" id="searchInput" placeholder="Search by process name..." onkeyup="searchProcesses()">
+    </div>
+    <table id="processTable">
+        <tr>
+            <th>PID</th>
+            <th>Name</th>
+            <th>User</th>
+            <th>CPU %</th>
+            <th>Memory %</th>
+            <th>Creation Time</th>
+            <th>Actions</th>
+        </tr>
+        {% for proc in processes %}
+        <tr class="{% if proc['cpu_percent'] > 80 %}high-cpu{% endif %} {% if proc['memory_percent'] > 80 %}high-memory{% endif %}">
+            <td>{{ proc['pid'] }}</td>
+            <td>{{ proc['name'] }}</td>
+            <td>{{ proc['username'] }}</td>
+            <td style="color: {% if proc['cpu_percent'] > 80 %}red{% elif proc['cpu_percent'] > 50 %}orange{% else %}green{% endif %};">{{ proc['cpu_percent'] }}</td>
+            <td style="color: {% if proc['memory_percent'] > 80 %}red{% elif proc['memory_percent'] > 50 %}orange{% else %}green{% endif %};">{{ proc['memory_percent'] }}</td>
+            <td>{{ proc['create_time'] }}</td>
+            <td class="action-buttons">
+                <button onclick="performAction('kill', '{{ proc['pid'] }}')">Kill</button>
+                <button onclick="performAction('stop', '{{ proc['pid'] }}')">Stop</button>
+                <button onclick="performAction('restart', '{{ proc['pid'] }}')">Restart</button>
+                <button onclick="viewDetails('{{ proc['pid'] }}')">Details</button>
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    <script>
+        function performAction(action, pid) {
+            if (confirm("Are you sure you want to perform " + action + " action on process with PID " + pid + "?")) {
+                fetch('/action/' + action + '/' + pid)
+                    .then(response => {
+                        if (response.ok) {
+                            alert(response.message);
+                            location.reload(); // Reload the page to update the process list
+                        } else {
+                            alert("Failed to perform " + action + " action on process with PID " + pid + ".");
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert("An error occurred while attempting to perform " + action + " action on process with PID " + pid + ".");
+                    });
+            }
+        }
+
+        function viewDetails(pid) {
+            fetch('/action/details/' + pid)
+                .then(response => response.json())
+                .then(data => {
+                    let details = 'Process Details:\n';
+                    details += 'PID: ' + data.pid + '\n';
+                    details += 'Name: ' + data.name + '\n';
+                    details += 'Username: ' + data.username + '\n';
+                    details += 'CPU %: ' + data.cpu_percent + '\n';
+                    details += 'Memory %: ' + data.memory_percent + '\n';
+                    details += 'Creation Time: ' + data.create_time + '\n';
+                    details += 'Status: ' + data.status + '\n';
+                    details += 'Threads: ' + data.threads + '\n';
+                    alert(details);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert("An error occurred while retrieving process details for PID " + pid + ".");
+                });
+        }
+
+        function searchProcesses() {
+            var input, filter, table, tr, td, i, txtValue;
+            input = document.getElementById("searchInput");
+            filter = input.value.toUpperCase();
+            table = document.getElementById("processTable");
+            tr = table.getElementsByTagName("tr");
+            for (i = 0; i < tr.length; i++) {
+                td = tr[i].getElementsByTagName("td")[1]; // Index 1 corresponds to the 'Name' column
+                if (td) {
+                    txtValue = td.textContent || td.innerText;
+                    if (txtValue.toUpperCase().indexOf(filter) > -1) {
+                        tr[i].style.display = "";
+                    } else {
+                        tr[i].style.display = "none";
+                    }
+                }
+            }
+        }
+    </script>
+</body>
+</html>
+
