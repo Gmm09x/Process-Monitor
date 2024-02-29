@@ -55,10 +55,10 @@
             <td style="color: {% if proc['memory_percent'] > 80 %}red{% elif proc['memory_percent'] > 50 %}orange{% else %}green{% endif %};">{{ proc['memory_percent'] }}</td>
             <td>{{ proc['create_time'] }}</td>
             <td class="action-buttons">
-                <button onclick="performAction('kill', '{{ proc['pid'] }}')">Kill</button>
-                <button onclick="performAction('stop', '{{ proc['pid'] }}')">Stop</button>
-                <button onclick="performAction('restart', '{{ proc['pid'] }}')">Restart</button>
-                <button onclick="viewDetails('{{ proc['pid'] }}')">Details</button>
+                <button onclick="performAction('kill', '{{ proc['pid'] }}')" style="background-color: #f44336; color: white;">Kill</button>
+                <button onclick="performAction('stop', '{{ proc['pid'] }}')" style="background-color: #ff9800; color: white;">Stop</button>
+                <button onclick="performAction('restart', '{{ proc['pid'] }}')" style="background-color: #4caf50; color: white;">Restart</button>
+                <button onclick="viewDetails('{{ proc['pid'] }}')" style="background-color: #008CBA; color: white;">Details</button>
             </td>
         </tr>
         {% endfor %}
